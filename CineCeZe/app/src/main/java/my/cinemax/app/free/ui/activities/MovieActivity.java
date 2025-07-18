@@ -90,8 +90,13 @@ import my.cinemax.app.free.ui.Adapters.PosterAdapter;
 import com.squareup.picasso.Picasso;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -355,12 +360,25 @@ public class MovieActivity extends AppCompatActivity {
 
 
     private void setPlayableList() {
-        for (int i = 0; i < poster.getSources().size(); i++) {
-            if (poster.getSources().get(i).getKind().equals("both") || poster.getSources().get(i).getKind().equals("play")){
-                playSources.add(poster.getSources().get(i));
+        try {
+            InputStream is = getAssets().open("cinecraze.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            String json = new String(buffer, "UTF-8");
+            JSONObject obj = new JSONObject(json);
+            JSONArray streaming = obj.getJSONArray("streaming");
+            for (int i = 0; i < streaming.length(); i++) {
+                JSONObject stream = streaming.getJSONObject(i);
+                Source source = new Source();
+                source.setQuality(stream.getString("quality"));
+                source.setUrl(stream.getString("url"));
+                playSources.add(source);
             }
+        } catch (IOException | JSONException ex) {
+            ex.printStackTrace();
         }
-
     }
     private void setDownloadableList() {
         for (int i = 0; i < poster.getSources().size(); i++) {
@@ -523,18 +541,7 @@ public class MovieActivity extends AppCompatActivity {
         floating_action_button_activity_movie_play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkSUBSCRIBED()){
-                    showSourcesPlayDialog();
-                }else{
-                    if (poster.getPlayas().equals("2")){
-                        showDialog(false);
-                    }else if(poster.getPlayas().equals("3") ){
-                        operationAfterAds = 200;
-                        showDialog(true);
-                    }else{
-                        showSourcesPlayDialog();
-                    }
-                }
+                showSourcesPlayDialog();
             }
         });
         linear_layout_movie_activity_rate.setOnClickListener(new View.OnClickListener() {
@@ -544,18 +551,7 @@ public class MovieActivity extends AppCompatActivity {
             }
         });
         linear_layout_movie_activity_download.setOnClickListener(v->{
-            if (checkSUBSCRIBED()){
-                showSourcesDownloadDialog();
-            }else{
-                if (poster.getDownloadas().equals("2")){
-                    showDialog(false);
-                }else if(poster.getDownloadas().equals("3") ){
-                    showDialog(true);
-                    operationAfterAds = 100;
-                }else{
-                    showSourcesDownloadDialog();
-                }
-            }
+            showSourcesDownloadDialog();
         });
         floating_action_button_activity_movie_comment.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1257,11 +1253,7 @@ public class MovieActivity extends AppCompatActivity {
                 }
             }
             holder.image_view_item_source_premium.setVisibility(View.GONE);
-            if (playSources.get(position).getPremium() != null) {
-                if (!playSources.get(position).getPremium().equals("1")){
-                    holder.image_view_item_source_premium.setVisibility(View.VISIBLE);
-                }
-            }
+            holder.image_view_item_source_premium.setVisibility(View.GONE);
 
             holder.text_view_item_source_size.setVisibility(View.GONE);
             if (playSources.get(position).getSize() != null) {
@@ -1308,35 +1300,11 @@ public class MovieActivity extends AppCompatActivity {
                     break;
             }
             holder.image_view_item_source_type_play.setOnClickListener(v-> {
-                if (checkSUBSCRIBED()) {
-                    playSource(position);
-                }else{
-                    if (playSources.get(position).getPremium().equals("2")) {
-                        showDialog(false);
-                    } else if (playSources.get(position).getPremium().equals("3")) {
-                        operationAfterAds = 300;
-                        current_position_play = position;
-                        showDialog(true);
-                    } else {
-                        playSource(position);
-                    }
-                }
+                playSource(position);
                 play_source_dialog.dismiss();
             });
             holder.image_view_item_source_type_link.setOnClickListener( v -> {
-                if (checkSUBSCRIBED()) {
-                    openLink(position);
-                }else{
-                    if (playSources.get(position).getPremium().equals("2")){
-                        showDialog(false);
-                    }else if(playSources.get(position).getPremium().equals("3") ){
-                        operationAfterAds = 300;
-                        current_position_play=  position;
-                        showDialog(true);
-                    }else{
-                        openLink(position);
-                    }
-                }
+                openLink(position);
                 play_source_dialog.dismiss();
 
             });
@@ -1394,11 +1362,6 @@ public class MovieActivity extends AppCompatActivity {
                 }
             }
             holder.image_view_item_source_premium.setVisibility(View.GONE);
-            if (downloadableList.get(position).getPremium() != null) {
-                if (!downloadableList.get(position).getPremium().equals("1")){
-                    holder.image_view_item_source_premium.setVisibility(View.VISIBLE);
-                }
-            }
 
             holder.text_view_item_source_size.setVisibility(View.GONE);
             if (downloadableList.get(position).getSize() != null) {
@@ -1439,37 +1402,12 @@ public class MovieActivity extends AppCompatActivity {
                     break;
             }
             holder.image_view_item_source_type_download.setOnClickListener(v-> {
-                if (checkSUBSCRIBED()){
-                    DownloadSource(downloadableList.get(position));
-                }else {
-                    if (downloadableList.get(position).getPremium().equals("2")) {
-                        showDialog(false);
-                    } else if (downloadableList.get(position).getPremium().equals("3")) {
-                        operationAfterAds = 400;
-                        current_position_download = position;
-                        showDialog(true);
-                    } else {
-                        DownloadSource(downloadableList.get(position));
-                    }
-                    download_source_dialog.dismiss();
-                }
+                DownloadSource(downloadableList.get(position));
+                download_source_dialog.dismiss();
             });
             holder.image_view_item_source_type_link.setOnClickListener( v -> {
-                if (checkSUBSCRIBED()){
-                    openDownloadLink(position);
-                }else {
-                    if (downloadableList.get(position).getPremium().equals("2")) {
-                        showDialog(false);
-                    } else if (downloadableList.get(position).getPremium().equals("3")) {
-                        operationAfterAds = 400;
-                        current_position_download = position;
-                        showDialog(true);
-                    } else {
-                        openDownloadLink(position);
-                    }
-                    download_source_dialog.dismiss();
-                }
-
+                openDownloadLink(position);
+                download_source_dialog.dismiss();
             });
         }
         @Override
