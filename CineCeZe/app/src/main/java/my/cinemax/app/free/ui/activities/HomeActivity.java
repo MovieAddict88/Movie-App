@@ -127,12 +127,37 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         initActions();
         firebaseSubscribe();
         initGDPR();
-        // initBuy(); // Removed call to initBuy
+        initBuy();
     }
 
-    // BillingSubs billingSubs; // Removed
-    // public void initBuy(){ ... } // initBuy method removed
-    // public void subscribe(){ ... } // subscribe method removed
+    BillingSubs billingSubs;
+    public void initBuy(){
+        List<String> listSkuStoreSubs = new ArrayList<>();
+        listSkuStoreSubs.add(Global.SUBSCRIPTION_ID);
+        billingSubs = new BillingSubs(this, listSkuStoreSubs, new CallBackBilling() {
+            @Override
+            public void onPurchase() {
+                PrefManager prefManager= new PrefManager(getApplicationContext());
+                prefManager.setString("SUBSCRIBED","TRUE");
+                Toasty.success(HomeActivity.this, "you have successfully subscribed ", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onNotPurchase() {
+                Toasty.warning(HomeActivity.this, "Operation has been cancelled  ", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onNotLogin() {
+            }
+        });
+    }
+
+    public void subscribe(){
+        billingSubs.purchase(Global.SUBSCRIPTION_ID);
+    }
+
+
 
     private void initActions() {
         image_view_activity_actors_back.setOnClickListener(v->{
@@ -249,45 +274,133 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         if (id == R.id.nav_home) {
             viewPager.setCurrentItem(0);
-        } else if (id == R.id.nav_exit) { // Kept nav_exit
+        }else if(id == R.id.login){
+            Intent intent= new Intent(HomeActivity.this, LoginActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+
+            FromLogin=true;
+
+        }else if (id == R.id.nav_exit) {
             final PrefManager prf = new PrefManager(getApplicationContext());
             if (prf.getString("NOT_RATE_APP").equals("TRUE")) {
                 super.onBackPressed();
             } else {
                 rateDialog(true);
             }
-        } else if (id == R.id.nav_settings) { // Kept nav_settings
+        }
+        else if (id == R.id.my_password) {
+            PrefManager prf= new PrefManager(getApplicationContext());
+            if (prf.getString("LOGGED").toString().equals("TRUE")){
+                Intent intent  =  new Intent(getApplicationContext(), PasswordActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+            }else{
+                Intent intent= new Intent(HomeActivity.this, LoginActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+                FromLogin=true;
+            }
+        }else if (id == R.id.nav_settings) {
             Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.enter, R.anim.exit);
-        } else if (id == R.id.nav_share) { // Kept nav_share
-            String shareBody = MyApi.API_URL; // This URL might need to be updated to Play Store link or similar
+        }else if (id==R.id.my_profile){
+            PrefManager prf= new PrefManager(getApplicationContext());
+            if (prf.getString("LOGGED").toString().equals("TRUE")){
+                Intent intent  =  new Intent(getApplicationContext(), EditActivity.class);
+                intent.putExtra("id", Integer.parseInt(prf.getString("ID_USER")));
+                intent.putExtra("image",prf.getString("IMAGE_USER").toString());
+                intent.putExtra("name",prf.getString("NAME_USER").toString());
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+
+            }else{
+                Intent intent= new Intent(HomeActivity.this, LoginActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+                FromLogin=true;
+            }
+        }else if (id==R.id.logout){
+            logout();
+        }else if (id ==  R.id.my_list){
+            Intent intent= new Intent(HomeActivity.this, MyListActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+        }
+        else if (id==R.id.nav_share){
+			//startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(MyApi.API_URL)));
+            //final String appPackageName=getApplication().getPackageName();
+            String shareBody = MyApi.API_URL;
             Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
             sharingIntent.setType("text/plain");
             sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
-            sharingIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
+            sharingIntent.putExtra(Intent.EXTRA_SUBJECT,  getString(R.string.app_name));
             startActivity(Intent.createChooser(sharingIntent, getResources().getString(R.string.app_name)));
-        } else if (id == R.id.nav_rate) { // Kept nav_rate
+        }else if (id == R.id.nav_rate) {
             rateDialog(false);
-        } else if (id == R.id.nav_help) { // Kept nav_help
-            Intent intent = new Intent(HomeActivity.this, SupportActivity.class);
+        }else if (id == R.id.nav_help){
+            Intent intent= new Intent(HomeActivity.this, SupportActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
-        } else if (id == R.id.nav_policy) { // Kept nav_policy
+
+        } else if (id == R.id.nav_policy  ){
             Intent intent = new Intent(getApplicationContext(), PolicyActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.enter, R.anim.exit);
+        }else if (id == R.id.buy_now){
+            showDialog();
         }
-        // Removed R.id.login, R.id.my_password, R.id.my_profile, R.id.logout, R.id.my_list, R.id.buy_now
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    // logout() method is no longer needed as there's no login state.
-    // public void logout(){ ... }
+    public      void logout(){
+        PrefManager prf= new PrefManager(getApplicationContext());
+        prf.remove("ID_USER");
+        prf.remove("SALT_USER");
+        prf.remove("TOKEN_USER");
+        prf.remove("NAME_USER");
+        prf.remove("TYPE_USER");
+        prf.remove("USERN_USER");
+        prf.remove("IMAGE_USER");
+        prf.remove("LOGGED");
+        prf.remove("NEW_SUBSCRIBE_ENABLED");
+        if (prf.getString("LOGGED").toString().equals("TRUE")){
+            text_view_name_nave_header.setText(prf.getString("NAME_USER").toString());
+            Picasso.with(getApplicationContext()).load(prf.getString("IMAGE_USER").toString()).placeholder(R.drawable.placeholder_profile).error(R.drawable.placeholder_profile).resize(200,200).centerCrop().into(circle_image_view_profile_nav_header);
+            if (prf.getString("TYPE_USER").toString().equals("google")){
+            }else {
+            }
+        }else{
+            Menu nav_Menu = navigationView.getMenu();
+            nav_Menu.findItem(R.id.my_profile).setVisible(false);
+            nav_Menu.findItem(R.id.my_password).setVisible(false);
+            nav_Menu.findItem(R.id.logout).setVisible(false);
+            nav_Menu.findItem(R.id.my_list).setVisible(false);
+            nav_Menu.findItem(R.id.login).setVisible(true);
+            text_view_name_nave_header.setText(getResources().getString(R.string.please_login));
+            Picasso.with(getApplicationContext()).load(R.drawable.placeholder_profile).placeholder(R.drawable.placeholder_profile).error(R.drawable.placeholder_profile).resize(200,200).centerCrop().into(circle_image_view_profile_nav_header);
+        }
 
+        if (prf.getString("APP_LOGIN_REQUIRED").toString().equals("TRUE")) {
+            Intent intent= new Intent(HomeActivity.this, LoginActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+            finish();
+        }
+        Menu nav_Menu = navigationView.getMenu();
+
+        if (checkSUBSCRIBED()){
+            nav_Menu.findItem(R.id.buy_now).setVisible(false);
+        }else{
+            nav_Menu.findItem(R.id.buy_now).setVisible(true);
+
+        }
+        image_view_profile_nav_header_bg.setVisibility(View.GONE);
+        Toasty.info(getApplicationContext(),getString(R.string.message_logout),Toast.LENGTH_LONG).show();
+    }
     class ViewPagerAdapter extends FragmentPagerAdapter {
 
         public ViewPagerAdapter(FragmentManager manager) {
@@ -573,45 +686,57 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onResume() {
         super.onResume();
 
-        // Simplified nav header and menu visibility as login is removed
+
+        PrefManager prf= new PrefManager(getApplicationContext());
         Menu nav_Menu = navigationView.getMenu();
 
-        // Hide items that were dynamically shown/hidden based on login or subscription
-        // These items are already removed from activity_main_drawer.xml,
-        // but good to ensure no code tries to access them if XML isn't perfectly synced.
-        try {
-            if (nav_Menu.findItem(R.id.buy_now) != null)
-                nav_Menu.findItem(R.id.buy_now).setVisible(false); // Subscription removed
-            if (nav_Menu.findItem(R.id.my_profile) != null)
-                nav_Menu.findItem(R.id.my_profile).setVisible(false);
-            if (nav_Menu.findItem(R.id.my_password) != null)
-                nav_Menu.findItem(R.id.my_password).setVisible(false);
-            if (nav_Menu.findItem(R.id.logout) != null)
-                nav_Menu.findItem(R.id.logout).setVisible(false);
-            if (nav_Menu.findItem(R.id.my_list) != null)
-                nav_Menu.findItem(R.id.my_list).setVisible(false);
-            if (nav_Menu.findItem(R.id.login) != null)
-                nav_Menu.findItem(R.id.login).setVisible(false); // Login item itself should be hidden
-        } catch (Exception e) {
-            // Catching potential null pointers if items are truly gone from XML.
-            Log.e("HomeActivityOnResume", "Error accessing menu items, likely already removed: " + e.getMessage());
+
+        if(checkSUBSCRIBED()){
+            nav_Menu.findItem(R.id.buy_now).setVisible(false);
+        }else{
+            nav_Menu.findItem(R.id.buy_now).setVisible(true);
         }
+        if (prf.getString("LOGGED").toString().equals("TRUE")){
+            nav_Menu.findItem(R.id.my_profile).setVisible(true);
+            if (prf.getString("TYPE_USER").toString().equals("email")){
+                nav_Menu.findItem(R.id.my_password).setVisible(true);
+            }
+            nav_Menu.findItem(R.id.logout).setVisible(true);
+            nav_Menu.findItem(R.id.my_list).setVisible(true);
+            nav_Menu.findItem(R.id.login).setVisible(false);
+            text_view_name_nave_header.setText(prf.getString("NAME_USER").toString());
+            Picasso.with(getApplicationContext()).load(prf.getString("IMAGE_USER").toString()).placeholder(R.drawable.placeholder_profile).error(R.drawable.placeholder_profile).resize(200,200).centerCrop().into(circle_image_view_profile_nav_header);
 
-        text_view_name_nave_header.setText(getString(R.string.app_name)); // Set to App Name or generic welcome
-        Picasso.with(getApplicationContext())
-                .load(R.drawable.placeholder_profile) // Load default placeholder
-                .placeholder(R.drawable.placeholder_profile)
-                .error(R.drawable.placeholder_profile)
-                .resize(200,200)
-                .centerCrop()
-                .into(circle_image_view_profile_nav_header);
-        image_view_profile_nav_header_bg.setVisibility(View.GONE); // Hide background profile image blur
+            final com.squareup.picasso.Target target = new com.squareup.picasso.Target() {
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                    BlurImage.with(getApplicationContext()).load(bitmap).intensity(25).Async(true).into(image_view_profile_nav_header_bg);
+                }
+                @Override
+                public void onBitmapFailed(Drawable errorDrawable) { }
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) { }
+            };
+            Picasso.with(getApplicationContext()).load(prf.getString("IMAGE_USER").toString()).into(target);
+            image_view_profile_nav_header_bg.setTag(target);
+            image_view_profile_nav_header_bg.setVisibility(View.VISIBLE);
 
-        if (FromLogin){ // This variable might be vestigial now
+        }else{
+            nav_Menu.findItem(R.id.my_profile).setVisible(false);
+            nav_Menu.findItem(R.id.my_password).setVisible(false);
+            nav_Menu.findItem(R.id.logout).setVisible(false);
+            nav_Menu.findItem(R.id.my_list).setVisible(false);
+            nav_Menu.findItem(R.id.login).setVisible(true);
+            image_view_profile_nav_header_bg.setVisibility(View.GONE);
+
+            text_view_name_nave_header.setText(getResources().getString(R.string.please_login));
+            Picasso.with(getApplicationContext()).load(R.drawable.placeholder_profile).placeholder(R.drawable.placeholder_profile).error(R.drawable.placeholder_profile).resize(200,200).centerCrop().into(circle_image_view_profile_nav_header);
+        }
+        if (FromLogin){
             FromLogin = false;
         }
-    }
 
+    }
     public void goToTV() {
         viewPager.setCurrentItem(3);
     }
@@ -630,11 +755,152 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             }
         });
     }
-    // public void showDialog(){ ... } // showDialog method removed for subscriptions
+    public void showDialog(){
+        this.dialog = new Dialog(this,
+                R.style.Theme_Dialog);
 
 
-    // Entire body of showDialog was here... now removed.
-    // } // This was the closing brace for showDialog
+
+
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        Window window = dialog.getWindow();
+        WindowManager.LayoutParams wlp = window.getAttributes();
+        getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+        wlp.gravity = Gravity.BOTTOM;
+        wlp.flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+        window.setAttributes(wlp);
+        final   PrefManager prf= new PrefManager(getApplicationContext());
+        dialog.setCancelable(false);
+        dialog.setContentView(R.layout.dialog_subscribe);
+
+        CardView card_view_gpay=(CardView) dialog.findViewById(R.id.card_view_gpay);
+        CardView card_view_paypal=(CardView) dialog.findViewById(R.id.card_view_paypal);
+        CardView card_view_cash=(CardView) dialog.findViewById(R.id.card_view_cash);
+        CardView card_view_credit_card=(CardView) dialog.findViewById(R.id.card_view_credit_card);
+        LinearLayout payment_methode=(LinearLayout) dialog.findViewById(R.id.payment_methode);
+        LinearLayout dialog_content=(LinearLayout) dialog.findViewById(R.id.dialog_content);
+        RelativeLayout relative_layout_subscibe_back=(RelativeLayout) dialog.findViewById(R.id.relative_layout_subscibe_back);
+
+        if (prf.getString("APP_STRIPE_ENABLED").toString().equals("FALSE")){
+            card_view_credit_card.setVisibility(View.GONE);
+        }
+        if (prf.getString("APP_PAYPAL_ENABLED").toString().equals("FALSE")){
+            card_view_paypal.setVisibility(View.GONE);
+        }
+        if (prf.getString("APP_CASH_ENABLED").toString().equals("FALSE")){
+            card_view_cash.setVisibility(View.GONE);
+        }
+        if (prf.getString("APP_GPLAY_ENABLED").toString().equals("FALSE")){
+            card_view_gpay.setVisibility(View.GONE);
+        }
+        TextView text_view_go_pro=(TextView) dialog.findViewById(R.id.text_view_go_pro);
+
+
+        TextView text_view_policy_2=(TextView) dialog.findViewById(R.id.text_view_policy_2);
+        TextView text_view_policy=(TextView) dialog.findViewById(R.id.text_view_policy);
+        SpannableString content = new SpannableString(getResources().getString(R.string.subscription_policy));
+        content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
+        text_view_policy.setText(content);
+        text_view_policy_2.setText(content);
+
+
+        text_view_policy.setOnClickListener(view -> {
+            startActivity(new Intent(HomeActivity.this,RefundActivity.class));
+        });
+        text_view_policy_2.setOnClickListener(view -> {
+            startActivity(new Intent(HomeActivity.this,RefundActivity.class));
+        });
+
+        RelativeLayout relative_layout_select_method=(RelativeLayout) dialog.findViewById(R.id.relative_layout_select_method);
+
+        relative_layout_select_method.setOnClickListener(v->{
+            if(payment_methode_id.equals("null")) {
+                Toasty.error(getApplicationContext(), getResources().getString(R.string.select_payment_method), Toast.LENGTH_LONG).show();
+                return;
+            }
+            switch (payment_methode_id){
+                case "gp" :
+                    subscribe();
+                    dialog.dismiss();
+                    break;
+                default:
+                    PrefManager prf1= new PrefManager(getApplicationContext());
+                    if (prf1.getString("LOGGED").toString().equals("TRUE")){
+                        Intent intent  =  new Intent(getApplicationContext(), PlansActivity.class);
+                        intent.putExtra("method",payment_methode_id);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+                        dialog.dismiss();
+
+                    }else{
+                        Intent intent= new Intent(HomeActivity.this, LoginActivity.class);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
+                        FromLogin=true;
+                    }
+                    dialog.dismiss();
+                    break;
+            }
+        });
+        text_view_go_pro.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                payment_methode.setVisibility(View.VISIBLE);
+                dialog_content.setVisibility(View.GONE);
+                relative_layout_subscibe_back.setVisibility(View.VISIBLE);
+            }
+        });
+
+        relative_layout_subscibe_back.setOnClickListener(v->{
+            payment_methode.setVisibility(View.GONE);
+            dialog_content.setVisibility(View.VISIBLE);
+            relative_layout_subscibe_back.setVisibility(View.GONE);
+        });
+        card_view_gpay.setOnClickListener(v->{
+            payment_methode_id="gp";
+            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
+            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+        });
+        card_view_paypal.setOnClickListener(v->{
+            payment_methode_id="pp";
+            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
+            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+        });
+        card_view_credit_card.setOnClickListener(v->{
+            payment_methode_id="cc";
+            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
+        });
+        card_view_cash.setOnClickListener(v->{
+            payment_methode_id="cash";
+            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
+            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
+        });
+        dialog.setOnKeyListener(new Dialog.OnKeyListener() {
+
+            @Override
+            public boolean onKey(DialogInterface arg0, int keyCode,
+                                 KeyEvent event) {
+                // TODO Auto-generated method stub
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+
+                    dialog.dismiss();
+                }
+                return true;
+            }
+        });
+        dialog.show();
+    }
 
     @Override
     public void onBackPressed() {
@@ -652,5 +918,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
 
     }
-    // public boolean checkSUBSCRIBED(){ ... } // checkSUBSCRIBED method removed
+    public boolean checkSUBSCRIBED(){
+        PrefManager prefManager= new PrefManager(getApplicationContext());
+        if (!prefManager.getString("SUBSCRIBED").equals("TRUE") && !prefManager.getString("NEW_SUBSCRIBE_ENABLED").equals("TRUE")) {
+            return false;
+        }
+        return true;
+    }
 }
