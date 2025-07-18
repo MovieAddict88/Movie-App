@@ -76,73 +76,40 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadData() {
-
         showLoadingView();
-        Retrofit retrofit = apiClient.getClient();
-        apiRest service = retrofit.create(apiRest.class);
-        Call<Data> call = service.homeData();
-        call.enqueue(new Callback<Data>() {
+        TmdbService tmdbService = TmdbClient.getService();
+        Call<TmdbMovieResponse> popularMoviesCall = tmdbService.getPopularMovies(Global.TMDB_API_KEY);
+        popularMoviesCall.enqueue(new Callback<TmdbMovieResponse>() {
             @Override
-            public void onResponse(Call<Data> call, Response<Data> response) {
-                apiClient.FormatData(getActivity(),response);
-                if (response.isSuccessful()){
-                    dataList.clear();
-                    dataList.add(new Data().setViewType(0));
-                    if (response.body().getSlides().size()>0){
-                        Data sliodeData =  new Data();
-                        sliodeData.setSlides(response.body().getSlides());
-                        dataList.add(sliodeData);
-                    }
-                    if (response.body().getChannels().size()>0){
-                       Data channelData = new Data();
-                       channelData.setChannels(response.body().getChannels());
-                        dataList.add(channelData);
-                    }
-                    if (response.body().getActors().size()>0){
-                        Data actorsData = new Data();
-                        actorsData.setActors(response.body().getActors());
-                        dataList.add(actorsData);
-                    }
-                    if (response.body().getGenres().size()>0){
-                        if (my_genre_list!=null){
-                            Data genreDataMyList = new Data();
-                            genreDataMyList.setGenre(my_genre_list);
-                            dataList.add(genreDataMyList);
-                        }
-                        for (int i = 0; i < response.body().getGenres().size(); i++) {
-                            Data genreData = new Data();
-                            genreData.setGenre(response.body().getGenres().get(i));
-                            dataList.add(genreData);
-                            if (native_ads_enabled){
-                                item++;
-                                if (item == lines_beetween_ads ){
-                                    item= 0;
-                                    if (prefManager.getString("ADMIN_NATIVE_TYPE").equals("FACEBOOK")) {
-                                        dataList.add(new Data().setViewType(5));
-                                    }else if (prefManager.getString("ADMIN_NATIVE_TYPE").equals("ADMOB")){
-                                        dataList.add(new Data().setViewType(6));
-                                    } else if (prefManager.getString("ADMIN_NATIVE_TYPE").equals("BOTH")){
-                                        if (type_ads == 0) {
-                                            dataList.add(new Data().setViewType(5));
-                                            type_ads = 1;
-                                        }else if (type_ads == 1){
-                                            dataList.add(new Data().setViewType(6));
-                                            type_ads = 0;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    showListView();
+            public void onResponse(Call<TmdbMovieResponse> call, Response<TmdbMovieResponse> response) {
+                if (response.isSuccessful()) {
+                    Data popularMoviesData = new Data();
+                    popularMoviesData.setGenre(new Genre(-1, "Popular Movies", response.body().getMovies()));
+                    dataList.add(popularMoviesData);
                     homeAdapter.notifyDataSetChanged();
-                }else{
-                    showErrorView();
                 }
             }
 
             @Override
-            public void onFailure(Call<Data> call, Throwable t) {
+            public void onFailure(Call<TmdbMovieResponse> call, Throwable t) {
+            }
+        });
+
+        Call<TmdbMovieResponse> topRatedMoviesCall = tmdbService.getTopRatedMovies(Global.TMDB_API_KEY);
+        topRatedMoviesCall.enqueue(new Callback<TmdbMovieResponse>() {
+            @Override
+            public void onResponse(Call<TmdbMovieResponse> call, Response<TmdbMovieResponse> response) {
+                if (response.isSuccessful()) {
+                    Data topRatedMoviesData = new Data();
+                    topRatedMoviesData.setGenre(new Genre(-1, "Top Rated Movies", response.body().getMovies()));
+                    dataList.add(topRatedMoviesData);
+                    homeAdapter.notifyDataSetChanged();
+                }
+                showListView();
+            }
+
+            @Override
+            public void onFailure(Call<TmdbMovieResponse> call, Throwable t) {
                 showErrorView();
             }
         });
@@ -174,25 +141,16 @@ public class HomeFragment extends Fragment {
             loadData();
         });
     }
-    public boolean checkSUBSCRIBED(){
-        if (!prefManager.getString("SUBSCRIBED").equals("TRUE") && !prefManager.getString("NEW_SUBSCRIBE_ENABLED").equals("TRUE")) {
-            return false;
-        }
-        return true;
-    }
     private void initViews() {
-
+        AdManager adManager = new AdManager(getActivity());
         boolean tabletSize = getResources().getBoolean(R.bool.isTablet);
-        if (!prefManager.getString("ADMIN_NATIVE_TYPE").equals("FALSE")){
+        if (!adManager.getAdmobNativeId().equals("false")){
             native_ads_enabled=true;
             if (tabletSize) {
                 lines_beetween_ads=Integer.parseInt(prefManager.getString("ADMIN_NATIVE_LINES"));
             }else{
                 lines_beetween_ads=Integer.parseInt(prefManager.getString("ADMIN_NATIVE_LINES"));
             }
-        }
-        if (checkSUBSCRIBED()) {
-            native_ads_enabled=false;
         }
         this.swipe_refresh_layout_home_fragment = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_layout_home_fragment);
         this.linear_layout_load_home_fragment = (LinearLayout) view.findViewById(R.id.linear_layout_load_home_fragment);

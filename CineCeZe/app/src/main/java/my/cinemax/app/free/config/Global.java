@@ -22,6 +22,7 @@ public class Global {
 
 
     public static final String SUBSCRIPTION_ID = "my.cinemax.app.free.subs";
+    public static final String TMDB_API_KEY = "871c8ec045dba340e55b032a0546948c";
 
 }
 

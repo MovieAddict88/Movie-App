@@ -23,6 +23,11 @@ public class Genre  implements Parcelable {
     public Genre(){
 
     }
+    public Genre(Integer id, String title, List<Poster> posters) {
+        this.id = id;
+        this.title = title;
+        this.posters = posters;
+    }
     protected Genre(Parcel in) {
         if (in.readByte() == 0) {
             id = null;

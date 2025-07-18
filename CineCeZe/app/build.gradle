@@ -122,8 +122,6 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'com.facebook.android:audience-network-sdk:6.6.0'
     implementation 'com.google.android.ads.consent:consent-library:1.0.8'
-    implementation 'com.paypal.sdk:paypal-android-sdk:2.15.3'
-    implementation 'com.stripe:stripe-android:14.5.0'
     implementation 'com.google.ads.mediation:facebook:6.6.0.0'
     implementation 'com.google.android.gms:play-services-ads:20.3.0'
     implementation 'com.google.android.ads:mediation-test-suite:2.0.0'
@@ -135,7 +133,6 @@ dependencies {
 
 
     implementation files('libs/YouTubeAndroidPlayerApi.jar')
-    implementation 'com.github.congle7997:GoogleIAP:1.0.8'
 
 }
 apply plugin: 'com.google.gms.google-services'

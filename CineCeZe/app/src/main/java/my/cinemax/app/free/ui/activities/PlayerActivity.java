@@ -28,6 +28,12 @@ import my.cinemax.app.free.event.CastSessionStartedEvent;
 import my.cinemax.app.free.ui.player.CustomPlayerFragment;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 
 /**
@@ -147,10 +153,9 @@ public class PlayerActivity extends AppCompatActivity {
         mCastContext = CastContext.getSharedInstance(this);
         Bundle bundle = getIntent().getExtras() ;
         vodeoId = bundle.getInt("id");
-        videoUrl = bundle.getString("url");
         videoKind = bundle.getString("kind");
         isLive = bundle.getBoolean("isLive");
-        videoType = bundle.getString("type");
+        videoType = "mp4";
         videoTitle = bundle.getString("title");
         videoSubTile = bundle.getString("subtitle");
         videoImage = bundle.getString("image");
@@ -208,7 +213,23 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private String getVideoUrl() {
-        return videoUrl;
+        try {
+            InputStream is = getAssets().open("cinecraze.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            String json = new String(buffer, "UTF-8");
+            JSONObject jsonObject = new JSONObject(json);
+            JSONArray streamingSources = jsonObject.getJSONArray("streaming_sources");
+            if (streamingSources.length() > 0) {
+                JSONObject source = streamingSources.getJSONObject(0);
+                return source.getString("url");
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public CastSession getCastSession() {

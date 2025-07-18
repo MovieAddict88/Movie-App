@@ -269,83 +269,6 @@ public class MovieActivity extends AppCompatActivity {
         loadRewardedVideoAd();
 
 
-        initBuy();
-    }
-
-    BillingSubs billingSubs;
-    public void initBuy(){
-        List<String> listSkuStoreSubs = new ArrayList<>();
-        listSkuStoreSubs.add(Global.SUBSCRIPTION_ID);
-        billingSubs = new BillingSubs(this, listSkuStoreSubs, new CallBackBilling() {
-            @Override
-            public void onPurchase() {
-                PrefManager prefManager= new PrefManager(getApplicationContext());
-                prefManager.setString("SUBSCRIBED","TRUE");
-                Toasty.success(MovieActivity.this, "you have successfully subscribed ", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onNotPurchase() {
-                Toasty.warning(MovieActivity.this, "Operation has been cancelled  ", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onNotLogin() {
-            }
-        });
-    }
-
-    public void subscribe(){
-        billingSubs.purchase(Global.SUBSCRIPTION_ID);
-    }
-    public void loadRewardedVideoAd() {
-        PrefManager   prefManager= new PrefManager(getApplicationContext());
-
-        mRewardedVideoAd.load(getApplicationContext(), prefManager.getString("ADMIN_REWARDED_ADMOB_ID"),
-                new AdRequest.Builder().build(), new RewardedAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
-                        super.onAdLoaded(rewardedAd);
-
-                        if (autoDisplay){
-                            dialog.dismiss();
-                            autoDisplay = false;
-                            mRewardedVideoAd = rewardedAd;
-                            mRewardedVideoAd.show(MovieActivity.this, rewardItem -> {
-                                dialog.dismiss();
-                                Toasty.success(getApplicationContext(),getString(R.string.use_content_for_free)).show();
-                                Log.d("Rewarded","onRewarded ");
-                                switch (operationAfterAds){
-                                    case  100 :
-                                        poster.setDownloadas("1");
-                                        break;
-                                    case  200 :
-                                        poster.setPlayas("1");
-                                        break;
-                                    case 300 :
-                                        if (current_position_play != -1 ){
-                                            playSources.get(current_position_play).setPremium("1");
-                                            showSourcesPlayDialog();
-                                        }
-                                        break;
-                                    case 400:
-                                        if (current_position_download != -1 ){
-                                            downloadableList.get(current_position_download).setPremium("1");
-                                            showSourcesDownloadDialog();
-                                        }
-                                        break;
-                                }
-                            });
-                        }
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        super.onAdFailedToLoad(loadAdError);
-                        mRewardedVideoAd = null;
-
-                    }
-                });
     }
 
 
@@ -436,9 +359,26 @@ public class MovieActivity extends AppCompatActivity {
     private void getMovie() {
         poster = getIntent().getParcelableExtra("poster");
         from = getIntent().getStringExtra("from");
+
+        TmdbService tmdbService = TmdbClient.getService();
+        Call<Poster> call = tmdbService.getMovieDetails(poster.getId(), Global.TMDB_API_KEY);
+        call.enqueue(new Callback<Poster>() {
+            @Override
+            public void onResponse(Call<Poster> call, Response<Poster> response) {
+                if (response.isSuccessful()) {
+                    poster = response.body();
+                    setMovie();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Poster> call, Throwable t) {
+            }
+        });
     }
+
     private void setMovie() {
-        Picasso.with(this).load((poster.getCover()!=null ? poster.getCover() : poster.getImage())).into(image_view_activity_movie_cover);
+        Picasso.with(this).load((poster.getCover()!=null ? "https://image.tmdb.org/t/p/w500" + poster.getCover() : "https://image.tmdb.org/t/p/w500" + poster.getImage())).into(image_view_activity_movie_cover);
         final com.squareup.picasso.Target target = new com.squareup.picasso.Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -449,7 +389,7 @@ public class MovieActivity extends AppCompatActivity {
             @Override
             public void onPrepareLoad(Drawable placeHolderDrawable) { }
         };
-        Picasso.with(getApplicationContext()).load(poster.getImage()).into(target);
+        Picasso.with(getApplicationContext()).load("https://image.tmdb.org/t/p/w500" + poster.getImage()).into(target);
         image_view_activity_movie_background.setTag(target);
 
         ViewCompat.setTransitionName(image_view_activity_movie_cover, "imageMain");
@@ -501,7 +441,6 @@ public class MovieActivity extends AppCompatActivity {
         }else{
             floating_action_button_activity_movie_comment.setVisibility(View.GONE);
         }
-
     }
 
     private void initAction() {
@@ -523,18 +462,7 @@ public class MovieActivity extends AppCompatActivity {
         floating_action_button_activity_movie_play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkSUBSCRIBED()){
-                    showSourcesPlayDialog();
-                }else{
-                    if (poster.getPlayas().equals("2")){
-                        showDialog(false);
-                    }else if(poster.getPlayas().equals("3") ){
-                        operationAfterAds = 200;
-                        showDialog(true);
-                    }else{
-                        showSourcesPlayDialog();
-                    }
-                }
+                showSourcesPlayDialog();
             }
         });
         linear_layout_movie_activity_rate.setOnClickListener(new View.OnClickListener() {
@@ -544,18 +472,7 @@ public class MovieActivity extends AppCompatActivity {
             }
         });
         linear_layout_movie_activity_download.setOnClickListener(v->{
-            if (checkSUBSCRIBED()){
-                showSourcesDownloadDialog();
-            }else{
-                if (poster.getDownloadas().equals("2")){
-                    showDialog(false);
-                }else if(poster.getDownloadas().equals("3") ){
-                    showDialog(true);
-                    operationAfterAds = 100;
-                }else{
-                    showSourcesDownloadDialog();
-                }
-            }
+            showSourcesDownloadDialog();
         });
         floating_action_button_activity_movie_comment.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -563,13 +480,6 @@ public class MovieActivity extends AppCompatActivity {
                 showCommentsDialog();
             }
         });
-    }
-    public boolean checkSUBSCRIBED(){
-        PrefManager prefManager= new PrefManager(getApplicationContext());
-        if (!prefManager.getString("SUBSCRIBED").equals("TRUE") && !prefManager.getString("NEW_SUBSCRIBE_ENABLED").equals("TRUE")) {
-            return false;
-        }
-        return true;
     }
     public void playSource(int position){
         addView();
@@ -1308,37 +1218,12 @@ public class MovieActivity extends AppCompatActivity {
                     break;
             }
             holder.image_view_item_source_type_play.setOnClickListener(v-> {
-                if (checkSUBSCRIBED()) {
-                    playSource(position);
-                }else{
-                    if (playSources.get(position).getPremium().equals("2")) {
-                        showDialog(false);
-                    } else if (playSources.get(position).getPremium().equals("3")) {
-                        operationAfterAds = 300;
-                        current_position_play = position;
-                        showDialog(true);
-                    } else {
-                        playSource(position);
-                    }
-                }
+                playSource(position);
                 play_source_dialog.dismiss();
             });
             holder.image_view_item_source_type_link.setOnClickListener( v -> {
-                if (checkSUBSCRIBED()) {
-                    openLink(position);
-                }else{
-                    if (playSources.get(position).getPremium().equals("2")){
-                        showDialog(false);
-                    }else if(playSources.get(position).getPremium().equals("3") ){
-                        operationAfterAds = 300;
-                        current_position_play=  position;
-                        showDialog(true);
-                    }else{
-                        openLink(position);
-                    }
-                }
+                openLink(position);
                 play_source_dialog.dismiss();
-
             });
 
         }
@@ -1439,37 +1324,12 @@ public class MovieActivity extends AppCompatActivity {
                     break;
             }
             holder.image_view_item_source_type_download.setOnClickListener(v-> {
-                if (checkSUBSCRIBED()){
-                    DownloadSource(downloadableList.get(position));
-                }else {
-                    if (downloadableList.get(position).getPremium().equals("2")) {
-                        showDialog(false);
-                    } else if (downloadableList.get(position).getPremium().equals("3")) {
-                        operationAfterAds = 400;
-                        current_position_download = position;
-                        showDialog(true);
-                    } else {
-                        DownloadSource(downloadableList.get(position));
-                    }
-                    download_source_dialog.dismiss();
-                }
+                DownloadSource(downloadableList.get(position));
+                download_source_dialog.dismiss();
             });
             holder.image_view_item_source_type_link.setOnClickListener( v -> {
-                if (checkSUBSCRIBED()){
-                    openDownloadLink(position);
-                }else {
-                    if (downloadableList.get(position).getPremium().equals("2")) {
-                        showDialog(false);
-                    } else if (downloadableList.get(position).getPremium().equals("3")) {
-                        operationAfterAds = 400;
-                        current_position_download = position;
-                        showDialog(true);
-                    } else {
-                        openDownloadLink(position);
-                    }
-                    download_source_dialog.dismiss();
-                }
-
+                openDownloadLink(position);
+                download_source_dialog.dismiss();
             });
         }
         @Override
@@ -1754,193 +1614,6 @@ public class MovieActivity extends AppCompatActivity {
             _e.printStackTrace();
         }
     }
-    public void showDialog(Boolean withAds){
-        this.dialog = new Dialog(this,
-                R.style.Theme_Dialog);
-
-
-
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setCancelable(true);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        Window window = dialog.getWindow();
-        WindowManager.LayoutParams wlp = window.getAttributes();
-        getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-        wlp.gravity = Gravity.BOTTOM;
-        wlp.flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-        window.setAttributes(wlp);
-        final   PrefManager prf= new PrefManager(getApplicationContext());
-        dialog.setCancelable(false);
-        dialog.setContentView(R.layout.dialog_subscribe);
-
-        RelativeLayout relative_layout_watch_ads=(RelativeLayout) dialog.findViewById(R.id.relative_layout_watch_ads);
-        TextView text_view_watch_ads=(TextView) dialog.findViewById(R.id.text_view_watch_ads);
-
-        TextView text_view_policy_2=(TextView) dialog.findViewById(R.id.text_view_policy_2);
-        TextView text_view_policy=(TextView) dialog.findViewById(R.id.text_view_policy);
-        SpannableString content = new SpannableString(getResources().getString(R.string.subscription_policy));
-        content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
-        text_view_policy.setText(content);
-        text_view_policy_2.setText(content);
-
-
-        text_view_policy.setOnClickListener(view -> {
-            startActivity(new Intent(MovieActivity.this,RefundActivity.class));
-        });
-        text_view_policy_2.setOnClickListener(view -> {
-            startActivity(new Intent(MovieActivity.this,RefundActivity.class));
-        });
-
-
-        CardView card_view_gpay=(CardView) dialog.findViewById(R.id.card_view_gpay);
-        CardView card_view_paypal=(CardView) dialog.findViewById(R.id.card_view_paypal);
-        CardView card_view_cash=(CardView) dialog.findViewById(R.id.card_view_cash);
-        CardView card_view_credit_card=(CardView) dialog.findViewById(R.id.card_view_credit_card);
-        LinearLayout payment_methode=(LinearLayout) dialog.findViewById(R.id.payment_methode);
-        LinearLayout dialog_content=(LinearLayout) dialog.findViewById(R.id.dialog_content);
-        RelativeLayout relative_layout_subscibe_back=(RelativeLayout) dialog.findViewById(R.id.relative_layout_subscibe_back);
-
-        RelativeLayout relative_layout_select_method=(RelativeLayout) dialog.findViewById(R.id.relative_layout_select_method);
-
-        if (prf.getString("APP_STRIPE_ENABLED").toString().equals("FALSE")){
-            card_view_credit_card.setVisibility(View.GONE);
-        }
-        if (prf.getString("APP_PAYPAL_ENABLED").toString().equals("FALSE")){
-            card_view_paypal.setVisibility(View.GONE);
-        }
-        if (prf.getString("APP_CASH_ENABLED").toString().equals("FALSE")){
-            card_view_cash.setVisibility(View.GONE);
-        }
-        if (prf.getString("APP_GPLAY_ENABLED").toString().equals("FALSE")){
-            card_view_gpay.setVisibility(View.GONE);
-        }
-        relative_layout_select_method.setOnClickListener(v->{
-            if(payment_methode_id.equals("null")) {
-                Toasty.error(getApplicationContext(), getResources().getString(R.string.select_payment_method), Toast.LENGTH_LONG).show();
-                return;
-            }
-            switch (payment_methode_id){
-                case "gp" :
-                    subscribe();
-                    dialog.dismiss();
-                    break;
-                default:
-                    PrefManager prf1= new PrefManager(getApplicationContext());
-                    if (prf1.getString("LOGGED").toString().equals("TRUE")){
-                        Intent intent  =  new Intent(getApplicationContext(), PlansActivity.class);
-                        intent.putExtra("method",payment_methode_id);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
-                        dialog.dismiss();
-
-                    }else{
-                        Intent intent= new Intent(MovieActivity.this, LoginActivity.class);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_up, R.anim.slide_down);
-                    }
-                    dialog.dismiss();
-                    break;
-            }
-        });
-
-        if (withAds){
-            relative_layout_watch_ads.setVisibility(View.VISIBLE);
-        }else{
-            relative_layout_watch_ads.setVisibility(View.GONE);
-        }
-        relative_layout_watch_ads.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mRewardedVideoAd != null) {
-                    mRewardedVideoAd.show(MovieActivity.this, rewardItem -> {
-                        dialog.dismiss();
-                        Toasty.success(getApplicationContext(),getString(R.string.use_content_for_free)).show();
-                        Log.d("Rewarded","onRewarded ");
-                        switch (operationAfterAds){
-                            case  100 :
-                                poster.setDownloadas("1");
-                                break;
-                            case  200 :
-                                poster.setPlayas("1");
-                                break;
-                            case 300 :
-                                if (current_position_play != -1 ){
-                                    playSources.get(current_position_play).setPremium("1");
-                                    showSourcesPlayDialog();
-                                }
-                                break;
-                            case 400:
-                                if (current_position_download != -1 ){
-                                    downloadableList.get(current_position_download).setPremium("1");
-                                    showSourcesDownloadDialog();
-                                }
-                                break;
-                        }
-                    });
-                }else{
-                    autoDisplay =  true;
-                    loadRewardedVideoAd();
-                    text_view_watch_ads.setText("SHOW LOADING.");
-                }
-            }
-        });
-        TextView text_view_go_pro=(TextView) dialog.findViewById(R.id.text_view_go_pro);
-        text_view_go_pro.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                payment_methode.setVisibility(View.VISIBLE);
-                dialog_content.setVisibility(View.GONE);
-                relative_layout_subscibe_back.setVisibility(View.VISIBLE);
-            }
-        });
-        relative_layout_subscibe_back.setOnClickListener(v->{
-            payment_methode.setVisibility(View.GONE);
-            dialog_content.setVisibility(View.VISIBLE);
-            relative_layout_subscibe_back.setVisibility(View.GONE);
-        });
-        card_view_gpay.setOnClickListener(v->{
-            payment_methode_id="gp";
-            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
-            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-        });
-        card_view_paypal.setOnClickListener(v->{
-            payment_methode_id="pp";
-            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
-            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-        });
-        card_view_credit_card.setOnClickListener(v->{
-            payment_methode_id="cc";
-            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
-        });
-        card_view_cash.setOnClickListener(v->{
-            payment_methode_id="cash";
-            card_view_gpay.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_paypal.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-            card_view_cash.setCardBackgroundColor(getResources().getColor(R.color.colorAccent));
-            card_view_credit_card.setCardBackgroundColor(getResources().getColor(R.color.dark_gray));
-        });
-        dialog.setOnKeyListener(new Dialog.OnKeyListener() {
-
-            @Override
-            public boolean onKey(DialogInterface arg0, int keyCode,
-                                 KeyEvent event) {
-                // TODO Auto-generated method stub
-                if (keyCode == KeyEvent.KEYCODE_BACK) {
-
-                    dialog.dismiss();
-                }
-                return true;
-            }
-        });
-        dialog.show();
-    }
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String[] permissions, int[] grantResults) {
@@ -1963,11 +1636,11 @@ public class MovieActivity extends AppCompatActivity {
         }
     }
     public void showAdmobBanner(){
-        PrefManager prefManager= new PrefManager(getApplicationContext());
+        AdManager adManager = new AdManager(this);
         LinearLayout linear_layout_ads =  (LinearLayout) findViewById(R.id.linear_layout_ads);
         final AdView mAdView = new AdView(this);
         mAdView.setAdSize(AdSize.SMART_BANNER);
-        mAdView.setAdUnitId(prefManager.getString("ADMIN_BANNER_ADMOB_ID"));
+        mAdView.setAdUnitId(adManager.getAdmobBannerAdUnitId());
         AdRequest adRequest = new AdRequest.Builder()
                 .build();
         mAdView.loadAd(adRequest);
