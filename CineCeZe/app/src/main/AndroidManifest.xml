@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="my.cinemax.app.free">
+
+    <uses-sdk tools:overrideLibrary="com.congle7997.google_iap"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application
+        android:name="my.cinemax.app.free.MyApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
+        android:supportsRtl="true"
+        android:extractNativeLibs="true"
+        android:theme="@style/Theme.AppCompat"
+        android:usesCleartextTraffic="true"
+        tools:ignore="GoogleAppIndexingWarning">
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.StripeActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.FinishActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.PlansActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.CashActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.PasswordActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+
+        <meta-data
+            android:name="com.google.android.gms.ads.AD_MANAGER_APP"
+            android:value="true" />
+
+        <meta-data
+            android:name="applovin.sdk.key" android:value="@string/app_lovin_id"
+        />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
+        <service
+            android:name="my.cinemax.app.free.services.DownloadService"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name="my.cinemax.app.free.services.ToastService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:label="@string/app_name" />
+        <activity
+            android:name="com.facebook.CustomTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="@string/fb_login_protocol_scheme" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.PlayerActivity"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme" />
+
+        <meta-data
+            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            android:value="${applicationId}.cast.CastOptionsProvider" />
+
+        <service android:name="my.cinemax.app.free.services.NotifFirebaseMessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name="my.cinemax.app.free.cast.ExpandedControlsActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.CastVideosDark">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:launchMode="singleTask"
+                android:value="my.cinemax.app.free.ui.activities.PlayerActivity" />
+        </activity>
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.IntroActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.MovieActivity"
+            android:theme="@style/AppThemeActionDestils" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.HomeActivity"
+            android:theme="@style/AppThemeActionDestils" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.YoutubeActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.ActorsActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.ActorActivity"
+            android:theme="@style/AppThemeActionDestils" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.LoginActivity"
+            android:theme="@style/AppThemeActionDestilsNew" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.LoadActivity"
+            android:theme="@style/AppThemeActionDestils">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="fagmmmu.xyz" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.GenreActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.TopActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.MyListActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.SerieActivity"
+            android:theme="@style/AppThemeActionDestils" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.EditActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.ChannelActivity"
+            android:theme="@style/AppThemeActionDestils" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.CategoryActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.SearchActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.SplashActivity"
+            android:theme="@style/AppThemeActionDestils">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.SettingsActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.SupportActivity"
+            android:theme="@style/Theme.ProfileDialog" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.PolicyActivity"
+            android:theme="@style/AppThemeNoAction" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.EmbedActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="my.cinemax.app.free.ui.activities.RefundActivity"
+            android:theme="@style/AppThemeNoAction" />
+    </application>
+
+</manifest>
+
