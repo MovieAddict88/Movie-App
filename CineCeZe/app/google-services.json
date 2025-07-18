@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "364852911115",
+    "firebase_url": "https://fagmmmutv-default-rtdb.firebaseio.com",
+    "project_id": "fagmmmutv",
+    "storage_bucket": "fagmmmutv.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:364852911115:android:35031bfd9b9144e6f1fb0e",
+        "android_client_info": {
+          "package_name": "my.cinemax.app.free"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "364852911115-2l02vpu4gluhjlfmci6q5h22163hj4cl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "my.cinemax.app.free",
+            "certificate_hash": "570b057f96061e0d880feebfe439b0eae547a0ec"
+          }
+        },
+        {
+          "client_id": "364852911115-5p4phqo3u7k97s9gmoi0ak3etakh7uoc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdKLf0hneEJd5kGWV28i369PcYrozDBBg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "364852911115-5p4phqo3u7k97s9gmoi0ak3etakh7uoc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
