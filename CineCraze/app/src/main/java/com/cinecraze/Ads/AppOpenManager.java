@@ -19,7 +19,6 @@ import java.util.Date;
 
 public class AppOpenManager implements LifecycleObserver {
     private static final String LOG_TAG = "AppOpenManager";
-    private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/3419835294";
     private AppOpenAd appOpenAd = null;
     private AppOpenAd.AppOpenAdLoadCallback loadCallback;
     private final Context myApplication;
@@ -57,7 +56,7 @@ public class AppOpenManager implements LifecycleObserver {
                 };
         AdRequest request = getAdRequest();
         AppOpenAd.load(
-                myApplication, AD_UNIT_ID, request,
+                myApplication, AdIdManager.getAppOpenAdUnitId(), request,
                 AppOpenAd.APP_OPEN_AD_ORIENTATION_PORTRAIT, loadCallback);
     }
 

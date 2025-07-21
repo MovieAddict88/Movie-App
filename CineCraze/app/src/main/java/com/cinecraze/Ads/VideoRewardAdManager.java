@@ -11,7 +11,6 @@ import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
 public class VideoRewardAdManager {
-    private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
     private RewardedAd mRewardedAd;
     private final Context context;
     private final AdListener adListener;
@@ -31,7 +30,7 @@ public class VideoRewardAdManager {
         AdRequest adRequest = new AdRequest.Builder().build();
         RewardedAd.load(
                 context,
-                AD_UNIT_ID,
+                AdIdManager.getRewardedVideoAdUnitId(),
                 adRequest,
                 new RewardedAdLoadCallback() {
                     @Override

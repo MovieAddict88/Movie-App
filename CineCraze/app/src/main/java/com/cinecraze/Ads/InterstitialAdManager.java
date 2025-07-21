@@ -10,7 +10,6 @@ import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 public class InterstitialAdManager {
-    private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
     private InterstitialAd mInterstitialAd;
     private final Context context;
     private final AdListener adListener;
@@ -29,7 +28,7 @@ public class InterstitialAdManager {
         AdRequest adRequest = new AdRequest.Builder().build();
         InterstitialAd.load(
                 context,
-                AD_UNIT_ID,
+                AdIdManager.getInterstitialAdUnitId(),
                 adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override

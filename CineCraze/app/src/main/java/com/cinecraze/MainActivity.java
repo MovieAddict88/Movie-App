@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         instance = this;
 
+        AdIdManager.loadAdIds(this);
+
         MobileAds.initialize(this, initializationStatus -> {
         });
 
