@@ -12,6 +12,9 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.shashank.sony.fancydialoglib.FancyAlertDialog;
+import com.shashank.sony.fancydialoglib.FancyAlertDialogListener;
+import com.shashank.sony.fancydialoglib.Animation;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,7 +78,22 @@ public class MainActivity extends AppCompatActivity {
         if (webView.canGoBack()) {
             webView.goBack();
         } else {
-            super.onBackPressed();
+            FancyAlertDialog.Builder.with(this)
+                    .setTitle("Exit")
+                    .setMessage("Are you sure you want to exit?")
+                    .setNegativeBtnText("Cancel")
+                    .setPositiveBtnText("Exit")
+                    .setPositiveBtnBackgroundRes(R.color.colorPrimary)
+                    .setNegativeBtnBackgroundRes(R.color.colorPrimaryDark)
+                    .setAnimation(Animation.POP)
+                    .isCancellable(true)
+                    .setIcon(R.drawable.ic_baseline_exit_to_app_24, View.VISIBLE)
+                    .onPositiveClicked(dialog -> finish())
+                    .onNegativeClicked(dialog -> {
+                        // do nothing
+                    })
+                    .build()
+                    .show();
         }
     }
 
