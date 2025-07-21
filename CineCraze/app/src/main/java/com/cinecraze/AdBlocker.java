@@ -7,6 +7,7 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,6 +16,9 @@ public class AdBlocker {
     private static final String TAG = "AdBlocker";
     private static final String AD_HOSTS_FILE = "easylist.txt";
     private static final Set<String> AD_HOSTS = new HashSet<>();
+    private static final Set<String> VIDEO_WHITELIST = new HashSet<>(Arrays.asList(
+        "vidsrc.net", "vidjoy.pro", "vidcloud.pro", "mycloud.blue", "playhydrax.com"
+    ));
 
     public static void init(Context context) {
         new Thread(() -> {
@@ -23,7 +27,11 @@ public class AdBlocker {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.startsWith("||") && line.endsWith("^")) {
-                        AD_HOSTS.add(line.substring(2, line.length() - 1));
+                        String host = line.substring(2, line.length() - 1);
+                        // Skip if host is in video whitelist
+                        if (!VIDEO_WHITELIST.contains(host)) {
+                            AD_HOSTS.add(host);
+                        }
                     }
                 }
                 reader.close();
@@ -42,6 +50,19 @@ public class AdBlocker {
         if (host == null) {
             return false;
         }
-        return AD_HOSTS.contains(host);
+        
+        // Always allow video sources
+        if (VIDEO_WHITELIST.contains(host)) {
+            return false;
+        }
+        
+        // Check host and parent domains
+        while (host.contains(".")) {
+            if (AD_HOSTS.contains(host)) {
+                return true;
+            }
+            host = host.substring(host.indexOf('.') + 1);
+        }
+        return false;
     }
 }
