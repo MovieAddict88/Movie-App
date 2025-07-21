@@ -1,26 +1,30 @@
 package com.cinecraze;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.cinecraze.Ads.AppOpenManager;
+import com.cinecraze.Ads.InterstitialAdManager;
+import com.cinecraze.Ads.VideoRewardAdManager;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.shashank.sony.fancydialoglib.FancyAlertDialog;
-import com.shashank.sony.fancydialoglib.FancyAlertDialogListener;
 import com.shashank.sony.fancydialoglib.Animation;
+import com.shashank.sony.fancydialoglib.FancyAlertDialog;
 
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
-    private static MainActivity instance;
     private AdView mAdView;
+    private AppOpenManager appOpenManager;
+    private InterstitialAdManager interstitialAdManager;
+    private VideoRewardAdManager videoRewardAdManager;
+    private static MainActivity instance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +41,22 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         instance = this;
 
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+        MobileAds.initialize(this, initializationStatus -> {
+        });
+
+        appOpenManager = new AppOpenManager(this);
+        appOpenManager.fetchAd();
+
+        interstitialAdManager = new InterstitialAdManager(this, this::finish);
+        videoRewardAdManager = new VideoRewardAdManager(this, new VideoRewardAdManager.AdListener() {
             @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            public void onAdClosed() {
+                // Handle ad closed event
+            }
+
+            @Override
+            public void onUserEarnedReward() {
+                // Handle user earned reward event
             }
         });
 
@@ -53,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webview);
         webView.setWebViewClient(new AdBlockerWebViewClient());
         webView.setWebChromeClient(new CustomWebChromeClient());
-        
+
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
@@ -63,13 +80,13 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setLoadsImagesAutomatically(true);
-        
+
         // Important for video playback
         webSettings.setAllowContentAccess(true);
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        
+
         webView.loadUrl("https://movie-fcs.fwh.is/cini/");
     }
 
@@ -88,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     .setAnimation(Animation.POP)
                     .isCancellable(true)
                     .setIcon(R.drawable.ic_baseline_exit_to_app_24, View.VISIBLE)
-                    .onPositiveClicked(dialog -> finish())
+                    .onPositiveClicked(dialog -> interstitialAdManager.showAd(this))
                     .onNegativeClicked(dialog -> {
                         // do nothing
                     })
@@ -97,7 +114,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        appOpenManager.showAdIfAvailable();
+    }
+
     public static MainActivity getInstance() {
-        return instance;
+        return (MainActivity) instance;
     }
 }
