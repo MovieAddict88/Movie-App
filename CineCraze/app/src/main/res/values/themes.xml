@@ -6,4 +6,8 @@
   </style>
 
   <style name="AppTheme" parent="Base.AppTheme" />
+
+  <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <item name="android:windowBackground">@drawable/splash_background</item>
+  </style>
 </resources>
